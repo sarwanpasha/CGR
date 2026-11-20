@@ -5,9 +5,9 @@ from scipy.optimize import brentq, minimize_scalar
 g=lambda u:(2*norm.cdf(u)-1)**2/u
 f=lambda u:4*u*norm.pdf(u)-(2*norm.cdf(u)-1)
 u=brentq(f,0.1,5); print('u* = %.4f  ->  w* = %.4f sigma ; g(u*) = %.4f'%(u,2*u,g(u)))
-# exact (finite-signal) version: d2 = p^2/(lam w + p(1-p)) ; show w* depends weakly on lam*sigma
-for ls in (0.001,0.01,0.1,1.0):
-    h=lambda w: -( (2*norm.cdf(w/2)-1)**2/(ls*w+(2*norm.cdf(w/2)-1)*(2-2*norm.cdf(w/2))) )
+# exact version with pooled variance: d2 = p^2/(lam w + p(1-p)/2) ; w*/sigma depends only on lam*sigma
+for ls in (0.001,0.01,0.1,1.0,10.0):
+    h=lambda w: -( (2*norm.cdf(w/2)-1)**2/(ls*w+(2*norm.cdf(w/2)-1)*(2-2*norm.cdf(w/2))/2) )
     r=minimize_scalar(h,bounds=(0.01,50),method='bounded'); print('  lam*sigma=%-6g  w*/sigma=%.3f'%(ls,r.x))
 # Theorem 2: geometric pyramid with ratio rho: worst-case efficiency over sigma
 for rho in (2,4,8,16):
