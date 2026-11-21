@@ -116,6 +116,13 @@ The ClinVar scripts expect, under `data/cv/`, the files `clinvar.vcf.gz` (GRCh38
 | `strand_linear.py` | Strand-specific versus reverse-complement-merged k-mers |
 | `efficiency.py` | Parameter counts and inference speed |
 | `clinvar_splice_variants.py`, `clinvar_spliceai_baseline.py` | Scoring of ClinVar variants near splice junctions, and the SpliceAI comparison |
+| `combine_stats.py` | Average the pyramid ensemble with a fine-tuned foundation model, with paired bootstrap intervals |
+| `level_ablation.py` | Train on one pyramid level at a time (resolution spectrum of a task) |
+| `positional_spread.py` | Positional spread of the most discriminative k-mers and their best bin width |
+| `region_contrast.py` | Whole-window, binned, shuffled-bin, center/flank and left/right k-mer counts |
+| `orientation.py` | Re-orient windows by gene strand, by TSS side or at random, and retrain |
+| `window_profile.py`, `window_layout.py` | GC and CpG content along the window per class, and genomic layout of the windows |
+| `train_overlap.py`, `train_fold.py` | Variants with half-shifted bins and with strand-folded features |
 | `theory_resolution_law.py` | Constants of the bin-width analysis |
 | `synthetic_optimal_width.py`, `synthetic_pyramid_efficiency.py`, `synthetic_strand.py` | Simulations that check the analysis |
 

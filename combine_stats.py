@@ -6,6 +6,7 @@ import sys, glob, json, numpy as np, cgr_features as P
 from sklearn.metrics import matthews_corrcoef as M
 FM = sys.argv[1] if len(sys.argv) > 1 else 'dnabert2'; B = int(sys.argv[2]) if len(sys.argv) > 2 else 1000
 T = sorted({f.split('pyr2_base_')[1].rsplit('_s', 1)[0] for f in glob.glob('results/pyr2_base_*_s0.npy')})
+T = [t for t in T if __import__('os').path.exists('data/nt/%s_test.fna' % t)]
 FX = [t for t in T if t.startswith('splice') or t == 'promoter_tata']
 N = ['base', 'r2', 'k6', 'k6w_lr3']
 def pr(pat):
