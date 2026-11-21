@@ -24,8 +24,8 @@ def load(split):
         l = l.strip()
         if not l: continue
         if l[0] == '>':
-            a, y = l[1:].rsplit('|', 1); c, r = a.split(':'); s, e = r.split('-'); H.append((c, (int(s) + int(e)) // 2)); Y.append(int(y))
-        else: S.append(l.upper())
+            a, y = l[1:].rsplit('|', 1); c, r = a.split(':'); s, e = r.split('-'); H.append((c, (int(s) + int(e)) // 2)); Y.append(int(y)); S.append('')
+        else: S[-1] += l.upper()
     return H, S, np.array(Y)
 def genes():
     G = collections.defaultdict(list)
