@@ -1,7 +1,8 @@
-# Does orienting each window by genome annotation change what a model can learn? usage: orientation.py <task> [seed]
+# Does orienting each window by genome annotation change what a model can learn? usage: orientation.py <task> [seed] [rand]
 # Benchmark sequences are given on the forward genomic strand (header ">chr:start-end|label"). Using GENCODE gene
 # records only (no labels), every window is optionally reverse-complemented so that
 #   strand : the nearest gene is transcribed left to right          tss : the nearest TSS lies to the right of the window centre
+# With the third argument 'rand', a random half of the windows is reverse-complemented instead (control).
 # The base pyramid network is trained on the original and on the re-oriented sequences. Also reports how well the
 # distance to the nearest TSS alone predicts the label, and for 2-class tasks the fraction of positives per orientation.
 import sys, gzip, json, time, collections, numpy as np, torch, torch.nn as nn
@@ -69,8 +70,13 @@ def run(S, Y, St, Yt):
             if pat >= 8: break
     m.load_state_dict(best[1]); return float(matthews_corrcoef(Yt, prob(m, Xt).argmax(1)))
 G = genes(); (H, S, Y), (Ht, St, Yt) = load('train'), load('test'); (d, st), (dt, stt) = annotate(H, G), annotate(Ht, G)
-R = {'orig': run(S, Y, St, Yt), 'strand': run(orient(S, st < 0), Y, orient(St, stt < 0), Yt), 'tss': run(orient(S, d < 0), Y, orient(St, dt < 0), Yt)}
+MODE = sys.argv[3] if len(sys.argv) > 3 else 'all'; rr = np.random.RandomState(1)
+if MODE == 'rand': R = {'rand': run(orient(S, rr.rand(len(S)) < 0.5), Y, orient(St, rr.rand(len(St)) < 0.5), Yt)}
+else: R = {'orig': run(S, Y, St, Yt), 'strand': run(orient(S, st < 0), Y, orient(St, stt < 0), Yt), 'tss': run(orient(S, d < 0), Y, orient(St, dt < 0), Yt)}
 pos = Y == Y.max(); info = dict(n=len(Y), n_test=len(Yt), median_abs_dist_pos=float(np.median(np.abs(d[pos]))), median_abs_dist_neg=float(np.median(np.abs(d[~pos]))),
             auc_dist=float(roc_auc_score(pos, -np.abs(d))), frac_pos_minus=float(pos[st < 0].mean()), frac_pos_plus=float(pos[st > 0].mean()), frac_pos_tss_left=float(pos[d < 0].mean()), frac_pos_tss_right=float(pos[d >= 0].mean()))
-json.dump(dict(task=T, seed=SEED, mcc=R, info=info, sec=time.time() - t0), open('results/orient_%s_s%d.json' % (T, SEED), 'w'))
+if T in ('splice_sites_donors', 'splice_sites_acceptors'):
+    m = 'GT' if 'donor' in T else 'AG'; Sp = [q for q, y in zip(S, Y) if y == 1]; Sf = [q for q, y in zip(orient(S, st < 0), Y) if y == 1]
+    info['motif_fwd'] = max(float(np.mean([q[o:o + 2] == m for q in Sp])) for o in range(290, 310)); info['motif_oriented'] = max(float(np.mean([q[o:o + 2] == m for q in Sf])) for o in range(290, 310))
+json.dump(dict(task=T, seed=SEED, mcc=R, info=info, sec=time.time() - t0), open('results/orient%s_%s_s%d.json' % ('' if MODE == 'all' else '_' + MODE, T, SEED), 'w'))
 print('ORIENT', T, {k: round(v, 3) for k, v in R.items()}, {k: (round(v, 3) if isinstance(v, float) else v) for k, v in info.items()}, '(%.0fs)' % (time.time() - t0), flush=True)
