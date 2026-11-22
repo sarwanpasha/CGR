@@ -1,4 +1,4 @@
-# Two checks for the ClinVar study. usage: cv_extra.py leak | mes
+# Checks for the ClinVar study. usage: cv_extra.py leak | mes | mes strata
 # leak : how many scored variants lie inside a training window of the benchmark splice-site tasks, and the AUC of the
 #        pyramid score on the variants outside all training windows
 # mes  : MaxEntScan baseline (needs the maxentpy package). The 9-mer at donor sites and the 23-mer at acceptor sites
@@ -36,6 +36,20 @@ else:
         lo, hi, f = (an - 3, an + 6, f5) if ty[k] == 'D' else (an - 20, an + 3, f3)
         okc += a[an:an + 2] == 'GT' if ty[k] == 'D' else a[an - 2:an] == 'AG'
         if lo <= i < hi and 'N' not in a[lo:hi]: d[n] = f(a[lo:hi]) - f(b[lo:hi])
+    if len(sys.argv) > 2:
+        r = rel[K]; D_ = ty[K] == 'D'; yy = y[K]; rs = np.random.RandomState(0)
+        reg = {'donor exon (<=-4)': D_ & (r <= -4), 'donor motif (-3..5)': D_ & (r >= -3) & (r <= 5), 'donor intron (>=6)': D_ & (r >= 6),
+               'acc intron (<=-21)': ~D_ & (r <= -21), 'acc motif (-20..2)': ~D_ & (r >= -20) & (r <= 2), 'acc exon (>=3)': ~D_ & (r >= 3),
+               'outside motifs': (D_ & ((r <= -4) | (r >= 6))) | (~D_ & ((r <= -21) | (r >= 3))), 'all': np.ones(len(K), bool)}
+        for nm, m in reg.items():
+            if not (0 < yy[m].sum() < m.sum()): continue
+            a = z(sai[m]) + z(d[m]); b = a + z(s[K][m]); c0 = z(sai[m]); c1 = c0 + z(s[K][m]); ym = yy[m]; wm = w[m]; o = []
+            for _ in range(400):
+                i = rs.randint(0, len(ym), len(ym))
+                if 0 < ym[i].sum() < len(i): o.append((AP(ym[i], b[i], sample_weight=wm[i]) - AP(ym[i], a[i], sample_weight=wm[i]), AU(ym[i], b[i]) - AU(ym[i], a[i]), AP(ym[i], c1[i], sample_weight=wm[i]) - AP(ym[i], c0[i], sample_weight=wm[i])))
+            o = np.array(o); q = lambda j: '[%+.3f,%+.3f]' % (np.percentile(o[:, j], 2.5), np.percentile(o[:, j], 97.5))
+            print('STR %-20s n %5d path %4d | ap sai %.3f s+m %.3f s+m+p %.3f pyr %.3f mes %.3f | d_ap(+p|s+m) %s d_auc %s d_ap(+p|s) %s' % (nm, m.sum(), ym.sum(), AP(ym, sai[m], sample_weight=wm), AP(ym, a, sample_weight=wm), AP(ym, b, sample_weight=wm), AP(ym, s[K][m], sample_weight=wm), AP(ym, d[m], sample_weight=wm), q(0), q(1), q(2)), flush=True)
+        sys.exit()
     dist = -np.abs(rel[K]).astype(float); print('MES n %d canonical site found %.3f nonzero %.3f' % (len(K), okc / float(len(K)), (d != 0).mean()))
     for nm, v in (('mes', d), ('mes+dist', z(d) + z(dist)), ('pyr', s[K]), ('pyr+mes', z(s[K]) + z(d)), ('sai', sai), ('sai+mes', z(sai) + z(d)), ('p+sai', z(s[K]) + z(sai)), ('p+sai+mes', z(s[K]) + z(sai) + z(d))):
         print('MES %-10s auc %.3f ap_full %.3f' % (nm, AU(y[K], v), AP(y[K], v, sample_weight=w)))
