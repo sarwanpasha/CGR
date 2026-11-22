@@ -7,9 +7,16 @@ D = [l.rstrip('\n').split('\t') for l in open('results/cv_variants.tsv')]; h = D
 o = json.load(open('results/cv_spliceai_scores.json')); K = np.array(sorted(int(k) for k in o))
 y = np.array([int(D[k][ix['label']]) for k in K]); rel = np.array([int(D[k][ix['rel']]) for k in K])
 S = {'pyr': np.array([float(D[k][ix['d_pyr']]) for k in K]), 'dist': -np.abs(rel).astype(float), 'sai': np.array([o[str(k)] for k in K])}
-z = lambda v: (v - v.mean()) / (v.std() + 1e-9); S['p+sai'] = z(S['pyr']) + z(S['sai'])
+z = lambda v: (v - v.mean()) / (v.std() + 1e-9); S['p+sai'] = z(S['pyr']) + z(S['sai']); S['d+sai'] = z(S['dist']) + z(S['sai']); S['p+d+sai'] = z(S['pyr']) + z(S['dist']) + z(S['sai'])
 NB = int(sys.argv[1]) if len(sys.argv) > 1 else 687181; w = np.where(y == 1, 1.0, NB / float((y == 0).sum()))
 print('n %d path %d benign %d weight %.1f prevalence %.4f' % (len(y), y.sum(), (y == 0).sum(), w.max(), y.sum() / (y.sum() + NB)))
 for k, v in S.items():
     t = np.sort(v[y == 0])[::-1]; r = [float((v[y == 1] > t[int(f * len(t))]).mean()) for f in (0.001, 0.01)]
-    print('%-5s auc %.3f ap_sample %.3f ap_full %.4f recall@fpr0.1%% %.3f @1%% %.3f' % (k, AU(y, v), AP(y, v), AP(y, v, sample_weight=w), r[0], r[1]))
+    print('%-8s auc %.3f ap_sample %.3f ap_full %.4f recall@fpr0.1%% %.3f @1%% %.3f' % (k, AU(y, v), AP(y, v), AP(y, v, sample_weight=w), r[0], r[1]))
+rs = np.random.RandomState(0); B = {k: [] for k in S}
+for _ in range(500):
+    i = rs.randint(0, len(y), len(y))
+    for k, v in S.items(): B[k].append(AP(y[i], v[i], sample_weight=w[i]))
+B = {k: np.array(v) for k, v in B.items()}; ci = lambda a: '[%.3f, %.3f]' % (np.percentile(a, 2.5), np.percentile(a, 97.5))
+for k in S: print('CI ap_full %-8s %s' % (k, ci(B[k])))
+for a, b in (('p+sai', 'sai'), ('p+sai', 'd+sai'), ('p+d+sai', 'd+sai'), ('d+sai', 'sai')): print('DIFF %s - %s %s' % (a, b, ci(B[a] - B[b])))
