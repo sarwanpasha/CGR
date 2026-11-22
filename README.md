@@ -123,6 +123,11 @@ The ClinVar scripts expect, under `data/cv/`, the files `clinvar.vcf.gz` (GRCh38
 | `orientation.py` | Re-orient windows by gene strand, by TSS side or at random, and retrain |
 | `window_profile.py`, `window_layout.py` | GC and CpG content along the window per class, and genomic layout of the windows |
 | `train_overlap.py`, `train_fold.py` | Variants with half-shifted bins and with strand-folded features |
+| `comparators.py` | Positional FCGR (moments), oligo-kernel features and weighted-degree features as comparators |
+| `controls.py` | Validation-selected single level, and GC-matched positive and negative windows |
+| `equal_ensembles.py` | Ensembles of equal size from stored probabilities |
+| `clinvar_pr.py`, `cv_extra.py` | Precision-recall on the ClinVar stratum, overlap with training windows, MaxEntScan baseline |
+| `final_report.py` | Print the numbers behind the tables from stored result files |
 | `theory_resolution_law.py` | Constants of the bin-width analysis |
 | `synthetic_optimal_width.py`, `synthetic_pyramid_efficiency.py`, `synthetic_strand.py` | Simulations that check the analysis |
 
