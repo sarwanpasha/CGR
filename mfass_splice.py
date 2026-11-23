@@ -101,7 +101,7 @@ log('genome chromosomes',len(G))
 def num(x):
     try: return int(float(x))
     except Exception: return None
-def build(up_first):
+def build(up_first):  # up_first: how the intron lengths map to genome left/right
     out = []; st = collections.Counter()
     for r in R_:
         c = r[ix['chr']]; sd_ = r[ix['strand']]; ref = r[ix['ref_allele']].upper(); alt = r[ix['alt_allele']].upper(); lab = r[ix['strong_lof']].upper()
@@ -111,7 +111,7 @@ def build(up_first):
         if g == ref: ga = alt
         elif g == ref.translate(COMP): ga = alt.translate(COMP); st['allele_on_transcript_strand'] += 1
         else: st['refmismatch'] += 1; continue
-        left = (i1 if sd_ == '+' else i2) if up_first else (i2 if sd_ == '+' else i1); s1 = s0 + left + 1; e1 = s1 + ex - 1; e = dict(label=int(lab == 'TRUE'), chrom=c, pos=v, strand=sd_, id=r[0], dpsi=r[ix['v2_dpsi']] if 'v2_dpsi' in ix else '', sites={})
+        left = {'tx_up': (i1 if sd_ == '+' else i2), 'tx_down': (i2 if sd_ == '+' else i1), 'g_i1': i1, 'g_i2': i2}[up_first]; s1 = s0 + left + 1; e1 = s1 + ex - 1; e = dict(label=int(lab == 'TRUE'), chrom=c, pos=v, strand=sd_, id=r[0], dpsi=r[ix['v2_dpsi']] if 'v2_dpsi' in ix else '', sites={})
         for ty, an in (('D', e1 + 1 if sd_ == '+' else s1 - 1), ('A', s1 if sd_ == '+' else e1)):
             S_ = SITE[ty]; L, ai = S_['L'], S_['anc']
             if sd_ == '+': a0 = an - ai; w = G[c][a0 - 1:a0 - 1 + L]; idx = v - a0; wa = w[:idx] + ga + w[idx + 1:] if 0 <= idx < L else None
@@ -122,8 +122,12 @@ def build(up_first):
             st['canon_' + ty] += 1; e['sites'][ty] = (w, wa, idx - ai)
         if e['sites']: out.append(e)
     return out, st
-A1, s1_ = build(True); A2, s2_ = build(False); V, stt = (A1, s1_) if s1_['canon_D'] + s1_['canon_A'] >= s2_['canon_D'] + s2_['canon_A'] else (A2, s2_)
-log('mapping intron1-upstream', dict(s1_)); log('mapping intron1-downstream', dict(s2_)); log('kept', len(V), 'strong_lof', sum(e['label'] for e in V))
+BM = {}
+for mode in ('tx_up', 'tx_down', 'g_i1', 'g_i2'):
+    BM[mode] = build(mode); log('mapping', mode, dict(BM[mode][1]))
+best = max(BM, key=lambda k: BM[k][1]['canon_D'] + BM[k][1]['canon_A']); V, stt = BM[best]; stt = dict(stt); stt['mode'] = best
+V = [e for e in V if 'D' in e['sites'] and 'A' in e['sites']]
+log('chosen', best, 'kept (both sites canonical)', len(V), 'strong_lof', sum(e['label'] for e in V))
 for e in V: e['pyr'] = -1e9; e['cnn'] = -1e9; e['mes'] = 0.0; e['motif'] = False; e['canon'] = False; e['dist'] = 999; e['exon'] = False
 for ty in ('D', 'A'):
     S_ = SITE[ty]; I = [i for i, e in enumerate(V) if ty in e['sites']]
