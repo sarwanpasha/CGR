@@ -1,5 +1,5 @@
 # Full fine-tuning of a foundation model on one task. usage: fm_finetune.py <model> <task> [seed] [epochs] [limit]
-# model: dnabert2 | ntv2_100 | ntv2_500   lr 3e-5, AdamW, linear decay, best epoch by validation MCC (same 10% split as our models)
+# model: dnabert2 | ntv2_100 | ntv2_250 | ntv2_500   lr 3e-5, AdamW, linear decay, best epoch by validation MCC (same 10% split as our models)
 import sys,os,time,json,math,numpy as np
 
 import torch,torch.nn as nn
@@ -7,7 +7,7 @@ from transformers import AutoTokenizer,AutoModelForSequenceClassification
 from sklearn.metrics import matthews_corrcoef,accuracy_score,f1_score
 from cgr_features import read
 M,T=sys.argv[1],sys.argv[2]; SEED=int(sys.argv[3]) if len(sys.argv)>3 else 0; EP=int(sys.argv[4]) if len(sys.argv)>4 else 3; LIM=int(sys.argv[5]) if len(sys.argv)>5 else 0
-NAME={'dnabert2':'zhihan1996/DNABERT-2-117M','ntv2_100':'InstaDeepAI/nucleotide-transformer-v2-100m-multi-species','ntv2_500':'InstaDeepAI/nucleotide-transformer-v2-500m-multi-species'}[M]
+NAME={'dnabert2':'zhihan1996/DNABERT-2-117M','ntv2_100':'InstaDeepAI/nucleotide-transformer-v2-100m-multi-species','ntv2_250':'InstaDeepAI/nucleotide-transformer-v2-250m-multi-species','ntv2_500':'InstaDeepAI/nucleotide-transformer-v2-500m-multi-species'}[M]
 torch.manual_seed(SEED); np.random.seed(SEED); dev=torch.device('cuda'); t0=time.time()
 S,Y=read(T,'train'); St,Yt=read(T,'test')
 if LIM: a=max(1,len(S)//LIM); b=max(1,len(St)//LIM); S,Y,St,Yt=S[::a][:LIM],Y[::a][:LIM],St[::b][:LIM],Yt[::b][:LIM]
@@ -20,7 +20,7 @@ tok=AutoTokenizer.from_pretrained(NAME,trust_remote_code=True)
 model=AutoModelForSequenceClassification.from_pretrained(NAME,num_labels=C,trust_remote_code=True).to(dev)
 npar=sum(p.numel() for p in model.parameters()); print('loaded %s %.1fM params, L=%d, train %d'%(NAME,npar/1e6,L0,len(tri)),flush=True)
 BS=32 if L0<=400 else 16
-if M=='ntv2_500': BS//=2
+if M in ('ntv2_250','ntv2_500'): BS//=2
 def batch(Q,ix):
     t=tok([Q[i] for i in ix],return_tensors='pt',padding=True,truncation=True,max_length=1024)
     return t['input_ids'].to(dev),t['attention_mask'].to(dev)
