@@ -129,7 +129,11 @@ The ClinVar scripts expect, under `data/cv/`, the files `clinvar.vcf.gz` (GRCh38
 | `clinvar_pr.py`, `cv_extra.py` | Precision-recall on the ClinVar stratum, overlap with training windows, MaxEntScan baseline |
 | `final_report.py` | Print the numbers behind the tables from stored result files |
 | `encode_peaks.py` | Peak-centred and edge-anchored windows from ENCODE K562 peak files, with GC-matched negatives |
-| `mfass_splice.py`, `mfass_spliceai.py` | Score experimentally measured splicing variants (MFASS) with the splice-site models and MaxEntScan, and the SpliceAI comparison |
+| `mfass_splice.py`, `mfass_spliceai.py`, `mfass_pangolin.py` | Score experimentally measured splicing variants (MFASS) with the splice-site models and MaxEntScan, and the SpliceAI and Pangolin comparisons |
+| `anchor_check.py` | Intersect the benchmark histone-mark windows with ENCODE peaks to locate peak boundaries inside the windows |
+| `theory_background.py` | Simulation of the optimal bin width under overdispersed and clustered background |
+| `genomic_benchmarks.py` | Download the Genomic Benchmarks suite and write it in the task format |
+| `fm_queue.sh` | Queue of fine-tuning runs that waits for an idle GPU |
 | `results_digest.py` | Compact tables of the control, comparator, peak-centred and MFASS results |
 | `theory_resolution_law.py` | Constants of the bin-width analysis |
 | `synthetic_optimal_width.py`, `synthetic_pyramid_efficiency.py`, `synthetic_strand.py` | Simulations that check the analysis |
