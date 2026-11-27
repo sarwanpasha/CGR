@@ -38,11 +38,11 @@ def run(S, Y, St, Yt, LEV):
         else:
             pat += 1
             if pat >= 8: break
-    m.load_state_dict(best[1]); return float(best[0]), float(matthews_corrcoef(Yt, pred(m, Xt)))
+    m.load_state_dict(best[1]); pt = pred(m, Xt); return float(best[0]), float(matthews_corrcoef(Yt, pt)), float((pt == Yt).mean())
 S, Y = PP.read(T, 'train'); St, Yt = PP.read(T, 'test'); S = [q.upper() for q in S]; St = [q.upper() for q in St]
 if MODE == 'select':
     R = {'(%d,%s)' % (k, r if r else 'L'): run(S, Y, St, Yt, [(k, r)]) for k, r in BASE}; R['all'] = run(S, Y, St, Yt, BASE)
-    b = max((k for k in R if k != 'all'), key=lambda k: R[k][0]); out = dict(levels=R, chosen=b, chosen_test=R[b][1], all_test=R['all'][1], best_test=max(R[k][1] for k in R if k != 'all'))
+    b = max((k for k in R if k != 'all'), key=lambda k: R[k][0]); out = dict(levels=R, chosen=b, chosen_test=R[b][1], all_test=R['all'][1], best_test=max(R[k][1] for k in R if k != 'all'), chosen_acc=R[b][2], all_acc=R['all'][2])
 else:
     def match(SS, YY, seed):
         g = np.array([int(100.0 * (q.count('G') + q.count('C')) / max(1, len(q))) for q in SS]); rs = np.random.RandomState(seed); keep = []
