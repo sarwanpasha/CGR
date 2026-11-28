@@ -41,7 +41,12 @@ for sd in '+-':
     cnt = {(da, de, sg): sum(canon(r, sd, *exon(r, sd, da, de, sg)) for r in rows) for da in (-1, 0, 1) for de in (-1, 0, 1) for sg in (1, -1)}; k = max(cnt, key=cnt.get); best[sd] = k; log('strand', sd, 'best offsets and sign', k, 'canonical', cnt[k], 'second', sorted(cnt.values())[-2])
 V = []
 for r in rows:
-    ok = [(sd,) + exon(r, sd, *best[sd]) for sd in '+-' if canon(r, sd, *exon(r, sd, *best[sd]))]
+    ok = []
+    for sd in '+-':
+        # the distances skip or count the junction differently for exonic and intronic variants, so offsets of 1 are tried per variant
+        c = sorted(set(exon(r, sd, da, de, best[sd][2]) for da in (-1, 0, 1) for de in (-1, 0, 1) if canon(r, sd, *exon(r, sd, da, de, best[sd][2]))))
+        if len(c) == 1: ok.append((sd,) + c[0])
+        elif len(c) > 1: ok += [None, None]
     g = G[r['chrom']][r['pos'] - 1]
     if len(ok) != 1 or g != r['ref']: continue
     r['strand'], r['s1'], r['e1'] = ok[0]; V.append(r)
