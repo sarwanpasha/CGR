@@ -130,6 +130,8 @@ The ClinVar scripts expect, under `data/cv/`, the files `clinvar.vcf.gz` (GRCh38
 | `final_report.py` | Print the numbers behind the tables from stored result files |
 | `encode_peaks.py` | Peak-centred and edge-anchored windows from ENCODE K562 peak files, with GC-matched negatives |
 | `mfass_splice.py`, `mfass_spliceai.py`, `mfass_pangolin.py`, `mfass_mmsplice.py` | Score experimentally measured splicing variants (MFASS) with the splice-site models and MaxEntScan, and the SpliceAI, Pangolin and MMSplice comparisons |
+| `vexseq_splice.py`, `vexseq_specialized.py` | Score Vex-seq variants with the splice-site models and MaxEntScan, and the SpliceAI, Pangolin and MMSplice comparisons |
+| `enc_digest.py` | Summary of level selection on the peak-centred windows |
 | `anchor_check.py` | Intersect the benchmark histone-mark windows with ENCODE peaks to locate peak boundaries inside the windows |
 | `theory_background.py` | Simulation of the optimal bin width under overdispersed and clustered background |
 | `genomic_benchmarks.py` | Download the Genomic Benchmarks suite and write it in the task format |
